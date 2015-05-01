@@ -1,42 +1,26 @@
 package org.jenkinsci.plugins.hw_dsl_stub;
 
-import groovy.lang.Closure;
-import org.jenkinsci.plugins.jobdsl.stub.DslClosureUnsupported;
-import org.jenkinsci.plugins.jobdsl.stub.DslNoClosureClass;
-import org.jenkinsci.plugins.jobdsl.stub.annotations.dsl.Method;
-import org.jenkinsci.plugins.jobdsl.stub.annotations.dsl.Parameter;
-import org.jenkinsci.plugins.jobdsl.stub.annotations.dsl.Builder;
 import hudson.Extension;
+import javaposse.jobdsl.dsl.DslExtensionMethod;
+import javaposse.jobdsl.dsl.helpers.step.StepContext;
+import javaposse.jobdsl.plugin.ContextExtensionPoint;
+
 /**
  * Created by jeremymarshall on 1/01/2015.
  */
-@Extension
-public class HelloWorld extends org.jenkinsci.plugins.jobdsl.stub.annotations.dsl.Builder{
-    @Override
-    public String getName(){
-        return "helloWorld";
-    }
+@Extension(optional = true)
+public class HelloWorld extends ContextExtensionPoint{
 
-    @Override
-    public String getDescription(){
-        return "Add a Hello World build step";
-    }
-
-    @Override
-    public final boolean hasMethods(){
-        return true;
-    };
-
-    @Method(description="Add a helloWorld step")
-    public Object helloWorld(@Parameter(description="The name to use in the hello world step") String name) {
+    @DslExtensionMethod(context = StepContext.class)
+    public Object helloWorld(String name) {
         return new HelloWorldBuilder(name);
     }
 
-    @Method(description="Add a helloWorld step with a closure", closureClass = HelloWorldClosure.class)
-    public Object helloWorld(@Parameter(description="The closure") Object closure)
-            throws DslClosureUnsupported, DslNoClosureClass, IllegalAccessException, InstantiationException
-    {
-        HelloWorldClosure i = (HelloWorldClosure) runClosure(closure, HelloWorldClosure.class);
-        return new HelloWorldBuilder(i.getWho());
+    @DslExtensionMethod(context = StepContext.class)
+    public Object helloWorld(Runnable closure){
+        HelloWorldContext context = new HelloWorldContext();
+        executeInContext(closure, context);
+
+        return new HelloWorldBuilder(context.getName());
     }
 }
